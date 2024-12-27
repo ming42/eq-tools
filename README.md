@@ -5,11 +5,9 @@
 ## 功能特点
 
 - 滤波器配置
- - 类型：
   - Peak
   - High Shelf/Low Shelf
   - High Pass/Low Pass
- - 带通：
   - Butterworth
   - Bessel
   - Chebyshev
@@ -27,8 +25,8 @@
 
 1. 克隆仓库
 ```bash
-git clone https://github.com/yourusername/peq_tools.git
-cd peq_tools
+git clone https://github.com/ming42/eq-tools.git
+cd eq_tools
 ```
 
 2. 选择安装方式
