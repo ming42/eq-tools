@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EQ Tools</title>
+    <!-- 使用本地Plotly.js -->
+    <script src="{{ url_for('static', filename='js/plotly.min.js') }}"></script>
+    <!-- 其他CSS和JS引用 -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+    /* 修改深色模式样式变量 */
+    [data-theme="dark"] {
+        --bg-color: #1a1a1a;
+        --text-color: #ffffff;
+        --border-color: #444;
+        --input-bg: #333;
+        --filter-bg: #2a2a2a;
+        --filter-header-bg: #333;
+        --description-color: #aaa;
+        --label-color: #ccc;
+        --button-bg: #444;
+        --button-hover-bg: #555;
+        --button-text: #fff;
+    }
+
+    [data-theme="light"] {
+        --bg-color: #ffffff;
+        --text-color: #333333;
+        --border-color: #dee2e6;
+        --input-bg: #ffffff;
+        --filter-bg: #f8f9fa;
+        --filter-header-bg: #e9ecef;
+        --description-color: #888;
+        --label-color: #666;
+        --button-bg: #2196F3;
+        --button-hover-bg: #1976D2;
+        --button-text: #fff;
+    }
+
+    /* 修改按钮样式变量 */
+    [data-theme="dark"] {
+        --button-bg: #444;
+        --button-hover-bg: #555;
+        --button-text: #fff;
+    }
+
+    [data-theme="light"] {
+        --button-bg: #2196F3;
+        --button-hover-bg: #1976D2;
+        --button-text: #fff;
+    }
+
+    /* 统一所有按钮样式 */
+    button {
+        background-color: var(--button-bg);
+        color: var(--button-text);
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+    button:hover {
+        background-color: var(--button-hover-bg);
+    }
+
+    /* 控制按钮特定样式 */
+    .controls button {
+        padding: 8px 16px;
+        margin-right: 10px;
+        font-size: 14px;
+    }
+
+    /* 移除之前可能重复的按钮样式 */
+    .controls button {
+        background-color: var(--button-bg);
+        color: var(--button-text);
+    }
+
+    .controls button:hover {
+        background-color: var(--button-hover-bg);
+    }
+
+    /* 修改滤波器容器样式 */
+    .filter-container {
+        background-color: var(--filter-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        margin-bottom: 15px;
+    }
+
+    .filter-header {
+        padding: 12px 15px;
+        background-color: var(--filter-header-bg);
+        border-radius: 8px 8px 0 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    /* 修改选择框样式 */
+    .filter-type, .filter-design, .filter-order {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        background-color: var(--input-bg);
+        color: var(--text-color);
+    }
+
+    /* 修改滤波器设计容器样式 */
+    .filter-design-wrapper {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        width: 100%;
+    }
+
+    /* 统一参数组样式 */
+    .parameter-group {
+        width: 100%;
+    }
+
+    /* 修改折叠按钮和删除按钮样式 */
+    .toggle-btn, .remove-filter-btn {
+        background-color: var(--button-bg);
+        color: var(--button-text);
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        padding: 4px 8px;
+    }
+
+    .toggle-btn:hover, .remove-filter-btn:hover {
+        background-color: var(--button-hover-bg);
+    }
+
+    /* 修改滤波器组布局 */
+    .filter-group {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        padding: 15px;
+    }
+
+    /* 确保所有输入框和选择框样式一致 */
+    input[type="number"], select {
+        background-color: var(--input-bg);
+        color: var(--text-color);
+        border: 1px solid var(--border-color);
+        padding: 8px;
+        border-radius: 4px;
+        width: 100%;
+        max-width: 200px;
+    }
+
+    /* 修改深色模式切换按钮样式 */
+    .theme-label {
+        color: var(--text-color);
+    }
+
+    /* 修改参数说明文字样式 */
+    .parameter-description {
+        color: var(--description-color);
+        font-size: 12px;
+        margin-top: 4px;
+    }
+
+    /* 修改现有样式以使用变量 */
+    body {
+        background-color: var(--bg-color);
+        color: var(--text-color);
+    }
+
+    .filter-container {
+        background-color: var(--filter-bg);
+        border-color: var(--border-color);
+    }
+
+    .filter-header {
+        background-color: var(--filter-header-bg);
+    }
+
+    .parameter-label {
+        color: var(--label-color);
+    }
+
+    .parameter-description {
+        color: var(--description-color);
+    }
+
+    input[type="number"], select {
+        background-color: var(--input-bg);
+        color: var(--text-color);
+        border-color: var(--border-color);
+    }
+
+    /* 统一输入框大小 */
+    input[type="number"] {
+        width: 100px;
+    }
+
+    /* 修改图表容器样式 */
+    .chart-container {
+        position: relative;
+        width: 100%;
+        height: 0;
+        padding-bottom: 56.25%; /* 16:9 比例 */
+        min-height: 400px; /* 设置最小高度 */
+    }
+
+    #response_curve {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100% !important; /* 强制宽度100% */
+        height: 100% !important; /* 强制高度100% */
+    }
+
+    /* 确保容器有合适的最大宽度 */
+    .container {
+        max-width: 1200px;
+        margin: 20px auto;
+        padding: 0 20px;
+        width: 100%;
+    }
+
+    /* 在小屏幕上调整图表比例 */
+    @media (max-width: 768px) {
+        .chart-container {
+            padding-bottom: 75%; /* 4:3 比例 */
+        }
+    }
+
+    @media (max-width: 480px) {
+        .chart-container {
+            padding-bottom: 100%; /* 1:1 比例 */
+        }
+    }
+
+    /* 参数修改动画 */
+    @keyframes highlight-change {
+        0% { background-color: rgba(76, 175, 80, 0.1); }
+        50% { background-color: rgba(76, 175, 80, 0.3); }
+        100% { background-color: rgba(76, 175, 80, 0.1); }
+    }
+
+    @keyframes highlight-related {
+        0% { background-color: rgba(33, 150, 243, 0.1); }
+        50% { background-color: rgba(33, 150, 243, 0.3); }
+        100% { background-color: rgba(33, 150, 243, 0.1); }
+    }
+
+    .parameter-changed {
+        animation: highlight-change 0.5s ease-in-out;
+    }
+
+    .parameter-related {
+        animation: highlight-related 0.5s ease-in-out;
+    }
+
+    .theme-toggle-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .theme-switch {
+        position: relative;
+        display: inline-block;
+        width: 60px;
+        height: 34px;
+    }
+
+    .theme-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 26px;
+        width: 26px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: .4s;
+    }
+
+    input:checked + .slider {
+        background-color: #2196F3;
+    }
+
+    input:checked + .slider:before {
+        transform: translateX(26px);
+    }
+
+    .slider.round {
+        border-radius: 34px;
+    }
+
+    .slider.round:before {
+        border-radius: 50%;
+    }
+
+    .theme-label {
+        font-size: 14px;
+        color: #666;
+        white-space: nowrap;
+    }
+
+    .container {
+        max-width: 1200px;
+        margin: 20px auto;
+        padding: 0 20px;
+    }
+
+    .controls {
+        margin-bottom: 20px;
+    }
+
+    .controls button {
+        padding: 8px 16px;
+        margin-right: 10px;
+        background-color: #2196F3;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .controls button:hover {
+        background-color: #1976D2;
+    }
+
+    .filter-container {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        margin-bottom: 15px;
+    }
+
+    .filter-header {
+        padding: 12px 15px;
+        background-color: #e9ecef;
+        border-radius: 8px 8px 0 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .filter-content {
+        padding: 15px;
+        background-color: var(--filter-bg);
+        border-radius: 0 0 8px 8px;
+    }
+
+    .filter-group {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+    }
+
+    .parameter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .parameter-label {
+        font-size: 14px;
+        color: #666;
+        margin-bottom: 4px;
+    }
+
+    .parameter-description {
+        font-size: 12px;
+        color: #888;
+        margin-top: 2px;
+    }
+
+    .freq-group {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .freq-group > div {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    input[type="number"], select {
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        width: 100%;
+    }
+
+    .filter-design-wrapper {
+        display: flex;
+        gap: 10px;
+    }
+
+    .filter-design-wrapper select {
+        flex: 1;
+    }
+
+    /* 确保所有文字颜色正确 */
+    .filter-number {
+        color: var(--text-color);
+    }
+    </style>
+</head>
+<body>
+    <!-- 添加主要内容容器 -->
+    <div class="container">
+        <!-- 添加控制按钮 -->
+        <div class="controls">
+            <button onclick="addFilter()">添加滤波器 / Add Filter</button>
+            <button onclick="clearFilters()">清除所有 / Clear All</button>
+        </div>
+
+        <!-- 添加滤波器容器 -->
+        <div id="filters-container"></div>
+
+        <!-- 添加响应曲线图表容器 -->
+        <div class="chart-container">
+            <div id="response_curve"></div>
+        </div>
+    </div>
+
+    <!-- 添加滤波器模板 -->
+    <template id="filter-template">
+        <div class="filter-container">
+            <div class="filter-header">
+                <button class="toggle-btn">▼</button>
+                <span class="filter-number"></span>
+                <button class="remove-filter-btn" onclick="removeFilter(this)">×</button>
+            </div>
+            <div class="filter-content">
+                <div class="filter-group">
+                    <div class="parameter-group">
+                        <label class="parameter-label">滤波器类型 / Filter Type</label>
+                        <select class="filter-type" onchange="updateFilterType(this)">
+                            <option value="peak">峰值滤波器 / Peak Filter</option>
+                            <option value="low_shelf">低架滤波器 / Low Shelf</option>
+                            <option value="high_shelf">高架滤波器 / High Shelf</option>
+                            <option value="low_pass">低通滤波器 / Low Pass</option>
+                            <option value="high_pass">高通滤波器 / High Pass</option>
+                        </select>
+                        <span class="parameter-description">选择滤波器的类型 / Select filter type</span>
+                    </div>
+
+                    <div class="parameter-group filter-design-container" style="display: none;">
+                        <label class="parameter-label">滤波器设计 / Filter Design</label>
+                        <div class="filter-design-wrapper">
+                            <select class="filter-design" onchange="updateFilter(this)">
+                                <option value="butterworth">Butterworth</option>
+                                <option value="linkwitz_riley">Linkwitz-Riley</option>
+                                <option value="bessel">Bessel</option>
+                                <option value="chebyshev">Chebyshev</option>
+                            </select>
+                            <select class="filter-order" onchange="updateFilter(this)">
+                                <option value="2">2阶 / 2nd Order</option>
+                                <option value="4">4阶 / 4th Order</option>
+                                <option value="6">6阶 / 6th Order</option>
+                                <option value="8">8阶 / 8th Order</option>
+                            </select>
+                        </div>
+                        <span class="parameter-description">选择滤波器类型和阶数 / Select filter type and order</span>
+                    </div>
+
+                    <div class="parameter-group">
+                        <label class="parameter-label">频率参数 / Frequency Parameters</label>
+                        <div class="freq-group">
+                            <div>
+                                <input type="number" class="f1" value="500" onchange="updateFromF1F2(this)">
+                                <span class="parameter-description">低截止频率 / Low Cut-off (Hz)</span>
+                            </div>
+                            <div>
+                                <input type="number" class="center-freq" value="1000" onchange="updateFromCenter(this)">
+                                <span class="parameter-description">中心频率 / Center Freq (Hz)</span>
+                            </div>
+                            <div>
+                                <input type="number" class="f2" value="2000" onchange="updateFromF1F2(this)">
+                                <span class="parameter-description">高截止频率 / High Cut-off (Hz)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="parameter-group">
+                        <label class="parameter-label">Q值 / Q Factor</label>
+                        <input type="number" class="q-value" value="1.4" step="0.1" onchange="updateFromQ(this)">
+                    </div>
+
+                    <div class="parameter-group gain-container">
+                        <label class="parameter-label">增益 / Gain</label>
+                        <input type="number" class="gain" value="6" step="0.1" onchange="updateFilter(this)">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- 主题切换按钮 -->
+    <div class="theme-toggle-container">
+        <span class="theme-label">深色模式 / Dark Mode</span>
+        <label class="theme-switch">
+            <input type="checkbox" id="theme-toggle">
+            <span class="slider round"></span>
+        </label>
+    </div>
+
+    <!-- JavaScript引用放在body末尾 -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html> 
